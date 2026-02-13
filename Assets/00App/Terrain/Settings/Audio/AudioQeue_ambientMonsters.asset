@@ -1,0 +1,90 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90491273d7f6cee4582d19a74c881957, type: 3}
+  m_Name: AudioQeue_ambientMonsters
+  m_EditorClassIdentifier: 
+  id: 1
+  channels: 1
+  sound3D: 1
+  clips:
+  - clip: {fileID: 8300000, guid: 6c7400d1d2eba3b4bb6655d430c6e533, type: 3}
+    minPitch: 1
+    maxPitch: 1
+    minVolume: 0.726
+    maxVolume: 1
+    id: 0
+  - clip: {fileID: 8300000, guid: 54c1e6fa4b651dc4baccf438b1912b67, type: 3}
+    minPitch: 1
+    maxPitch: 1
+    minVolume: 0.726
+    maxVolume: 1
+    id: 0
+  - clip: {fileID: 8300000, guid: 3d810d6bf13474449bf8d4c20a24ddee, type: 3}
+    minPitch: 1
+    maxPitch: 1
+    minVolume: 0.726
+    maxVolume: 1
+    id: 0
+  - clip: {fileID: 8300000, guid: ffaf100dca71068449a28d2e4f31da28, type: 3}
+    minPitch: 1
+    maxPitch: 1
+    minVolume: 0.726
+    maxVolume: 1
+    id: 0
+  - clip: {fileID: 8300000, guid: fbef96cfa6440b040a97d736cf96e566, type: 3}
+    minPitch: 1
+    maxPitch: 1
+    minVolume: 0.726
+    maxVolume: 1
+    id: 0
+  - clip: {fileID: 8300000, guid: dcfe6b88942a03b49bfce572a836201e, type: 3}
+    minPitch: 1
+    maxPitch: 1
+    minVolume: 0.726
+    maxVolume: 1
+    id: 0
+  - clip: {fileID: 8300000, guid: 695e5b3a93c76a4488f762eb26d91e89, type: 3}
+    minPitch: 1
+    maxPitch: 1
+    minVolume: 0.726
+    maxVolume: 1
+    id: 0
+  - clip: {fileID: 8300000, guid: 772acae0d76557047b5195548c0d2cf6, type: 3}
+    minPitch: 1
+    maxPitch: 1
+    minVolume: 0.726
+    maxVolume: 1
+    id: 0
+  - clip: {fileID: 8300000, guid: 3733bf68a845a724aa647e65596487b9, type: 3}
+    minPitch: 1
+    maxPitch: 1
+    minVolume: 0.726
+    maxVolume: 1
+    id: 0
+  - clip: {fileID: 8300000, guid: d79fbcb9ffea34748804c2f2ab77da17, type: 3}
+    minPitch: 1
+    maxPitch: 1
+    minVolume: 0.726
+    maxVolume: 1
+    id: 0
+  - clip: {fileID: 8300000, guid: 63eedbce55b1f21409764dc32120d10f, type: 3}
+    minPitch: 1
+    maxPitch: 1
+    minVolume: 0.726
+    maxVolume: 1
+    id: 0
+  - clip: {fileID: 8300000, guid: 3d8bf7d2b56710444968b31fc497b43b, type: 3}
+    minPitch: 1
+    maxPitch: 1
+    minVolume: 0.726
+    maxVolume: 1
+    id: 0

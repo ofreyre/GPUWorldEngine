@@ -1,0 +1,282 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Compute
+
+#ifndef dbg_math
+  #include "..\..\..\..\Common\Shaders\Math.cginc"
+#endif
+
+#ifndef dbg_ease
+  #include "..\..\..\..\Common\Shaders\Ease.cginc"
+#endif
+
+#ifndef dbg_whitenoise
+  #include "..\..\..\..\Common\Shaders\WhiteNoise.cginc"
+#endif
+
+uint max4(uint4 a)
+{
+    return max(a.x, max(a.y, max(a.z, a.w)));
+}
+
+uint max4(uint4 a, uint4 b)
+{
+    return max(max4(a), max4(b));
+}
+
+float4x3 sum(float4x3 m, float3 q)
+{    
+    return float4x3(
+        m._11_12_13 + q,
+        m._21_22_23 + q,
+        m._31_32_33 + q,
+        m._41_42_43 + q
+    );
+}
+
+float4x3 sub(float4x3 m, float3 q)
+{
+    return float4x3(
+        m._11_12_13 - q,
+        m._21_22_23 - q,
+        m._31_32_33 - q,
+        m._41_42_43 - q
+    );
+}
+
+float4x3 mul4x3(float4x3 m, float4x3 n)
+{
+    return float4x3(
+        m._11_12_13 * n._11_12_13,
+        m._21_22_23 * n._21_22_23,
+        m._31_32_33 * n._31_32_33,
+        m._41_42_43 * n._41_42_43
+    );
+}
+
+float2x4 mul2x4(float2x4 m, float2x4 n)
+{
+    return float2x4(
+        m._11_12_13_14 * n._11_12_13_14,
+        m._21_22_23_24 * n._21_22_23_24
+    );
+}
+
+float4x3 mul4x3_4(float4x3 m, float4 p)
+{
+    return float4x3(
+        m._11_12_13 * p.x,
+        m._21_22_23 * p.y,
+        m._31_32_33 * p.z,
+        m._41_42_43 * p.w
+    );
+}
+
+float4x3 div(float4x3 m, float4 p)
+{
+    return float4x3(
+        m._11_12_13 / p.x,
+        m._21_22_23 / p.y,
+        m._31_32_33 / p.z,
+        m._41_42_43 / p.w
+    );
+}
+
+float4 dot4x3(float4x3 m, float4x3 n)
+{
+    return float4(
+        dot(m._11_12_13, n._11_12_13),
+        dot(m._21_22_23, n._21_22_23),
+        dot(m._31_32_33, n._31_32_33),
+        dot(m._41_42_43, n._41_42_43)
+    );
+}
+
+float4x3 modulo(float4x3 dividend, float4x3 divisor)
+{
+    float4x3 positiveDivident = dividend % divisor + divisor;
+    return positiveDivident % divisor;
+}
+
+float4x3 modulo(float4x3 dividend, float4 divisor)
+{
+    float4x3 positiveDivident = float4x3(
+        dividend._11_12_13 % divisor.x + divisor.x,
+        dividend._21_22_23 % divisor.y + divisor.y,
+        dividend._31_32_33 % divisor.z + divisor.z,
+        dividend._41_42_43 % divisor.w + divisor.w
+    );
+    
+    return float4x3(
+        positiveDivident._11_12_13 % divisor.x,
+        positiveDivident._21_22_23 % divisor.y,
+        positiveDivident._31_32_33 % divisor.z,
+        positiveDivident._41_42_43 % divisor.w
+    );
+}
+
+float4 distance4x3(float4x3 m, float4x3 n)
+{
+    return float4(
+        distance(m._11_12_13, n._11_12_13),
+        distance(m._21_22_23, n._21_22_23),
+        distance(m._31_32_33, n._31_32_33),
+        distance(m._41_42_43, n._41_42_43)
+    );
+}
+
+float4x3 easeIn(float4x3 interpolator)
+{
+    return mul4x3(interpolator, interpolator);
+}
+
+float4x3 easeOut(float4x3 interpolator)
+{
+    return 1 - easeIn(1 - interpolator);
+}
+
+float4x3 easeInOut(float4x3 interpolator)
+{
+    float4x3 easeInValue = easeIn(interpolator);
+    float4x3 easeOutValue = easeOut(interpolator);
+    return lerp(easeInValue, easeOutValue, interpolator);
+}
+
+float4x3 rand(float4x3 m)
+{
+    return float4x3(
+        rand3dTo3d(m._11_12_13),
+        rand3dTo3d(m._21_22_23),
+        rand3dTo3d(m._31_32_33),
+        rand3dTo3d(m._41_42_43)
+    );
+}
+
+float4 CellularDist(float4x3 cp, float4x3 v, float4 pe, float3 direction)
+{
+    float4x3 cell = sum(cp, direction);
+    float4x3 tiledCell = modulo(cell, pe);
+    float4x3 cellValue = cell + rand(modulo(tiledCell, pe));
+    return distance4x3(cellValue, v);
+}
+
+float2x4 PerlinCellular3Tiled(float4x3 pP, float4 cellLengthP, float4 layeredP, float4x3 pC, float4 cellLengthC, float4 layeredC, float4 period)
+{
+    //Perlin
+    float4 peP = period / cellLengthP;
+    float4x3 vP = div(pP, cellLengthP);
+    float4x3 fP = frac(vP);
+    float4x3 iP = easeInOut(fP);
+    
+    //Celular    
+    float4 peC = period / cellLengthC;
+    float4x3 vC = div(pC, cellLengthC);
+    float4x3 cpC = floor(vC);
+    float4 dC = 9999999;
+    
+
+    float4 nZ[2];
+    [unroll(2)]
+    for (int z = 0; z <= 1; z++)
+    {
+        float4 nY[2];
+        [unroll(2)]
+        for (int y = 0; y <= 1; y++)
+        {
+            float4 nX[2];
+            [unroll(2)]
+            for (int x = 0; x <= 1; x++)
+            {
+                float3 direction = float3(x, y, z);
+                
+                //Perlin
+                float4x3 cdP = rand(modulo(sum(floor(vP), direction), peP)) * 2.0 - 1;
+                float4x3 dP = sub(fP, direction);
+                nX[x] = dot4x3(cdP, dP);
+                
+                //Celular   
+                float4 dist = CellularDist(cpC, vC, peC, direction);
+                dC = min(dC, dist);
+                
+            }
+            nY[y] = lerp(nX[0], nX[1], iP._11_21_31_41);
+        }
+        nZ[z] = lerp(nY[0], nY[1], iP._12_22_32_42);
+    }
+    
+    [unroll(3)]
+    for (int i = -1; i <= 1;i++)
+    {
+        
+        [unroll(3)]
+        for (int j = -1; j <= 1; j++)
+        {
+            float4 dist = CellularDist(cpC, vC, peC, float3(-1, i, j));
+            dC = min(dC, dist);
+            dist = CellularDist(cpC, vC, peC, float3(i, -1, j));
+            dC = min(dC, dist);
+            dist = CellularDist(cpC, vC, peC, float3(i, j, -1));
+            dC = min(dC, dist);
+        }
+    }
+    
+    return float2x4(
+        (lerp(nZ[0], nZ[1], iP._13_23_33_43) + 0.5) * layeredP,
+        dC * layeredC
+    );
+}
+
+float y;
+float period;
+float4 weight;
+
+float4 scaleP;
+float4 cellLengthP;
+uint4 layersP;
+float4 persistanceP;
+float4 roughnessP;
+
+float4 scaleC;
+float4 cellLengthC;
+float4 periodC;
+uint4 layersC;
+float4 persistanceC;
+float4 roughnessC;
+
+RWStructuredBuffer<float4> result;
+
+[numthreads(32,1,32)]
+void Compute(uint3 id : SV_DispatchThreadID)
+{
+    int max = int(period);
+    if (id.x < max && id.z < max)
+    {
+        float2x4 noise = 0;
+        float4 frequencyP = 1;
+        float4 frequencyC = 1;
+        float2x4 factor = 1;
+        uint layers = min(16, max4(layersP, layersC));
+        float3 p = float3(id.x, y, id.z) + period;
+        float4x3 pP = float4x3(p, p, p, p);
+        float4x3 pC = pP;
+        float2x4 roughness = float2x4(roughnessP, roughnessC);
+    
+
+        [unroll(16)]
+        for (uint i = 0; i < layers; i++)
+        {
+            noise += mul2x4(
+            PerlinCellular3Tiled(
+                mul4x3_4(pP, frequencyP), cellLengthP, step(layers, layersP),
+                mul4x3_4(pC, frequencyC), cellLengthC, step(layers, layersC),
+                period),
+            factor);
+            frequencyP *= persistanceP;
+            frequencyC *= persistanceC;
+            factor = mul2x4(factor, roughness);
+        }
+        
+        uint j = id.x + id.z * period;
+        float4 channelFilter = step(0, weight);
+        result[j] = (noise._11_12_13_14 * weight + (1 - noise._21_22_23_24) * (1 - weight)) * channelFilter;
+    }
+}

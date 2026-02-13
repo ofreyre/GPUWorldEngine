@@ -1,0 +1,186 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e52e65a03546ea1419865f6645bb8bd6, type: 3}
+  m_Name: EditorSettings
+  m_EditorClassIdentifier: 
+  computeBake: {fileID: 7200000, guid: 1b5277090c117714482d7d28112da574, type: 3}
+  computeBakeKernel: Compute
+  computeRender: {fileID: 7200000, guid: 32ed33b10bf99504289bc045c1d0490f, type: 3}
+  computeRenderKernel: Compute
+  renderShader: {fileID: 0}
+  details:
+  - textureSize: 128
+    channels:
+    - noiseName: 
+      perlinWeight: 0.53
+      perlin:
+        scale: 1
+        cellLength: 16
+        period: 128
+        layers: 0
+        persistance: 1
+        roughness: 0
+      cellular:
+        scale: 1
+        cellLength: 64
+        period: 128
+        layers: 0
+        persistance: 1.58
+        roughness: 0.4
+      foldOut: 1
+    - noiseName: 
+      perlinWeight: 0.5
+      perlin:
+        scale: 1
+        cellLength: 6.736842
+        period: 128
+        layers: 0
+        persistance: 1.58
+        roughness: 0.32
+      cellular:
+        scale: 0.47
+        cellLength: 12.8
+        period: 128
+        layers: 0
+        persistance: 1.58
+        roughness: 0.4
+      foldOut: 1
+    - noiseName: 
+      perlinWeight: 0.52
+      perlin:
+        scale: 1
+        cellLength: 3.6571429
+        period: 128
+        layers: 4
+        persistance: 1.58
+        roughness: 0.32
+      cellular:
+        scale: 0.47
+        cellLength: 4.413793
+        period: 128
+        layers: 4
+        persistance: 1.58
+        roughness: 0.4
+      foldOut: 1
+    - noiseName: 
+      perlinWeight: 0.52
+      perlin:
+        scale: 1
+        cellLength: 2.245614
+        period: 128
+        layers: 4
+        persistance: 1.58
+        roughness: 0.32
+      cellular:
+        scale: 0.47
+        cellLength: 2.909091
+        period: 128
+        layers: 4
+        persistance: 1.58
+        roughness: 0.4
+      foldOut: 1
+    detailName: Heigh Details
+    foldout: 1
+    visible: 1
+    y: 0
+  - textureSize: 128
+    channels:
+    - noiseName: 
+      perlinWeight: 0.52
+      perlin:
+        scale: 1
+        cellLength: 8
+        period: 128
+        layers: 4
+        persistance: 1.58
+        roughness: 0.32
+      cellular:
+        scale: 0.47
+        cellLength: 8
+        period: 128
+        layers: 4
+        persistance: 1.58
+        roughness: 0.4
+      foldOut: 1
+    - noiseName: 
+      perlinWeight: 0.52
+      perlin:
+        scale: 1
+        cellLength: 8
+        period: 128
+        layers: 4
+        persistance: 1.58
+        roughness: 0.32
+      cellular:
+        scale: 0.47
+        cellLength: 8
+        period: 128
+        layers: 4
+        persistance: 1.58
+        roughness: 0.4
+      foldOut: 1
+    - noiseName: 
+      perlinWeight: 0.5
+      perlin:
+        scale: 1
+        cellLength: 5.12
+        period: 128
+        layers: 4
+        persistance: 1.58
+        roughness: 0.32
+      cellular:
+        scale: 0.47
+        cellLength: 5.12
+        period: 128
+        layers: 4
+        persistance: 1.58
+        roughness: 0.4
+      foldOut: 0
+    - noiseName: 
+      perlinWeight: 0.5
+      perlin:
+        scale: 1
+        cellLength: 4
+        period: 128
+        layers: 4
+        persistance: 1.58
+        roughness: 0.32
+      cellular:
+        scale: 0.47
+        cellLength: 4
+        period: 128
+        layers: 4
+        persistance: 1.58
+        roughness: 0.4
+      foldOut: 1
+    detailName: Low Details
+    foldout: 1
+    visible: 0
+    y: 0
+  colorNames:
+  - R
+  - G
+  - B
+  - A
+  renderColorChannels: 01010101
+  scrollPos: {x: 0, y: 0}
+  windowRect:
+    serializedVersion: 2
+    x: 367
+    y: 277
+    width: 819
+    height: 553
+  lastSavePath: E:\Public\UnityOscar\ShaderExperiments\Assets\00App\Fog\Textures
+  settingsWidth: 270
+  labelWidth: 100
+  fieldWidth: 20
+  sliderWidth: 100

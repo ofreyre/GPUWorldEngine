@@ -1,0 +1,124 @@
+#pragma kernel TreeInitCompute
+
+#include "../../Common/Shaders/WhiteNoise.cginc"
+#include "MeshCollisionComputations.hlsl"
+
+struct SpacialData
+{
+    float3 position;
+    float3 eulerAngles;
+    float3 scale;
+    float r;
+    int2 gridCoords;
+    int2 chunkCoords;
+};
+
+struct Cyllinder
+{
+    float r;
+    float h;
+    float y;
+};
+
+uint biomeTreeMapBufferLength;
+uint chunkCellsCount;
+uint biomesLength;
+float cellLength;
+float time;
+float2 chunkCoords;
+float exclusionR;
+float2 exclusionC;
+float normalTolerance;
+
+StructuredBuffer<float3> normals;
+StructuredBuffer<int2> biomeTreeMap;
+StructuredBuffer<float> treesProbabilities;
+StructuredBuffer<Cyllinder> treesColliders;
+StructuredBuffer<uint> biomes;
+RWStructuredBuffer<SpacialData> spacialResult;
+RWStructuredBuffer<Cyllinder> collidersResult;
+RWStructuredBuffer<int> hasResult;
+
+int GetTreeIndexRND(uint2 biomeCoords)
+{
+    uint biomeIndex = (biomes[biomeCoords.x + biomeCoords.y * biomesLength]);
+    int2 treeMap = biomeTreeMap[biomeIndex];
+    if (treeMap.x == -1)
+        return -1;
+    
+    float prob = rand2dTo1d(biomeCoords.x, biomeCoords.y);
+    float spawnProb = 0;
+    for (int i = treeMap.x; i < treeMap.y; i++)
+    {
+        spawnProb += treesProbabilities[i];
+        if (prob < spawnProb)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+float3 GetScaleRND(float3 pos)
+{
+    float k = rand1dTo1d(pos.x * 173.5462 + pos.z * 43.7513);
+    return 0.9 * k + 1.1 * (1 - k);
+}
+
+float3 GetEulerAnglesRND(float3 pos)
+{   
+    //Rotation
+    float2 angles = rand2dTo2d(pos.xz);
+    return float3(angles.x * 1, angles.y * 360, 0);
+}
+
+[numthreads(32,32,1)]
+void TreeInitCompute(uint3 id : SV_DispatchThreadID)
+{
+    if(id.x < chunkCellsCount && id.y < chunkCellsCount)
+    {
+        int index = id.y * chunkCellsCount + id.x;
+        if (id.x > 0 && id.y > 0 && (id.x % 2 == 0) && (id.y % 2 == 0) && abs(dot(normals[index], float3(0, 1, 0))) > normalTolerance)
+        {
+            float2 pos = meshCollisionOrigin + id.xy * cellLength;
+            if (length(exclusionC - pos) > exclusionR)
+            {   
+                int i = GetTreeIndexRND(id.xy + 1);
+                if (i != -1)
+                {                    
+                    Cyllinder colliderSetting = treesColliders[i];
+                    
+                    SpacialData result;
+                    result.chunkCoords = chunkCoords;
+                    result.gridCoords = pos / cellLength;
+                    pos += cellLength * 0.5;
+                    float3 position = float3(pos.x, GetMeshY(pos), pos.y);
+                    result.position = position;
+                    result.eulerAngles = GetEulerAnglesRND(position);
+                    result.scale = GetScaleRND(position);
+                    result.r = colliderSetting.r * result.scale.x;
+                    spacialResult[index] = result;
+
+                    Cyllinder collider;
+                    collider.r = colliderSetting.r * result.scale.x;
+                    collider.h = colliderSetting.h * result.scale.x;
+                    collider.y = colliderSetting.y * result.scale.x;
+                    collidersResult[index] = collider;
+                    hasResult[index] = i;
+                }
+                else
+                {
+                    hasResult[index] = -1;
+                }
+            }
+            else
+            {
+                hasResult[index] = -3;
+            }
+        }
+        else
+        {
+            hasResult[index] = -4;
+        }
+    }
+}

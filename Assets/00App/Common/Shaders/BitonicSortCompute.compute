@@ -1,0 +1,34 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel BitonicSortCompute
+
+uint changeOrder;
+uint separation;
+uint sequenceLength;
+uint offset;
+uint i0, i1;
+
+RWStructuredBuffer<int2> workingArray; //x = cell index, y =  object index
+
+[numthreads(32,1,1)]
+void BitonicSortCompute (uint3 id : SV_DispatchThreadID)
+{
+    if(id.x < i1)
+    {
+        uint i = id.x + i0;
+        uint sequence = i / separation;
+        uint sequenceStart = sequence * sequenceLength;
+        int compare0 = sequenceStart + (i % separation) - offset;
+        if (compare0 >= 0)
+        {
+            uint order = ((i * 2) / changeOrder) % 2;
+            uint compare1 = compare0 + separation;
+            if ((order == 0 && workingArray[compare0].x > workingArray[compare1].x) ||
+                (order == 1 && workingArray[compare0].x < workingArray[compare1].x))
+            {
+                int2 val = workingArray[compare0];
+                workingArray[compare0] = workingArray[compare1];
+                workingArray[compare1] = val;
+            }
+        }
+    }
+}

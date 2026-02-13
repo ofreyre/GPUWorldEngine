@@ -1,0 +1,38 @@
+#pragma kernel ComputeNoise3D
+
+#include "../../../../Common/Shaders/PerlinWorley.cginc"
+
+struct noiseSettings
+{
+    float scale;
+    float cellLength;
+    float period;
+    uint layers;
+    float persistance;
+    float roughness;
+};
+
+float perlinWeight;
+
+StructuredBuffer<noiseSettings> settings;
+RWTexture3D<float4> noise;
+
+[numthreads(8,8,8)]
+void ComputeNoise3D (uint3 id : SV_DispatchThreadID)
+{
+    float offset = settings[0].period;
+    
+    noise[id.xyz] = float4(
+        PerlinWorley3D(id.xyz, perlinWeight,
+            settings[0].scale, settings[0].cellLength, settings[0].period, settings[0].layers, settings[0].persistance, settings[0].roughness,
+            settings[1].scale, settings[1].cellLength, settings[1].period, settings[1].layers, settings[1].persistance, settings[1].roughness
+        ),
+        Cellular3dtiledlayered(id.xyz, settings[2].scale, settings[2].cellLength, settings[2].period, settings[2].layers, settings[2].persistance, settings[2].roughness),
+        Cellular3dtiledlayered(id.xyz, settings[3].scale, settings[3].cellLength, settings[3].period, settings[3].layers, settings[3].persistance, settings[3].roughness),
+        Cellular3dtiledlayered(id.xyz, settings[4].scale, settings[4].cellLength, settings[4].period, settings[4].layers, settings[4].persistance, settings[4].roughness)
+    );
+    
+    //noise[id.xyz] = PerlinNoise3Tiledlayered(id.xyz, settings[0].scale, settings[0].cellLength, settings[0].period, settings[0].layers, settings[0].persistance, settings[0].roughness);
+    //noise[id.xyz] = 1 - Cellular3dtiledlayered(id.xyz + offset, settings[1].scale, settings[1].cellLength, settings[1].period, settings[1].layers, settings[1].persistance, settings[1].roughness);
+
+}

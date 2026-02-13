@@ -1,0 +1,18 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Texture3DtoArray
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+float3 textureSize;
+RWTexture3D<float4> sourceTexture;
+RWStructuredBuffer<float4> array;
+
+[numthreads(8,8,8)]
+void Texture3DtoArray (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+
+    uint i = id.z * uint(textureSize.x * textureSize.y) + id.y * uint(textureSize.y) + uint(textureSize.x);
+    array[i] = sourceTexture[id.xyz];
+}

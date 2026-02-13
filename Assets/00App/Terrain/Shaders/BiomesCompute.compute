@@ -1,0 +1,49 @@
+#ifndef dbg_biomes
+  #define dbg_biomes
+
+//#include "../../Common/Shaders/PerlinNoise.cginc"
+#include "PerlinHeightMap.cginc"
+
+#pragma kernel BiomesCompute
+
+/*
+** r = temperature
+** g = biome value
+** b = biome blend
+** a = biome order
+*/ 
+//RWTexture2D<float4> biomes;
+StructuredBuffer<float> heightMap;
+StructuredBuffer<uint> biomesMapping;
+RWStructuredBuffer<uint> biomes;
+int mCount;
+int hCount;
+
+uint biomesLength;
+float latitudeOffset;
+float latitudeRange;
+float maxHeight;
+int heightMapLength;
+float4 perlinOffset;
+//float perlinScale;
+
+[numthreads(32,32,1)]
+void BiomesCompute (uint3 id : SV_DispatchThreadID)
+{
+    if(id.x < biomesLength && id.y < biomesLength)
+    {
+        float height = heightMap[id.y * heightMapLength + id.x];
+        //float moisture = PerlinNoise2D ((id.xy + perlinOffset.xy), perlinScale);
+        float moisture = PerlinHeightMap(id.xy + perlinOffset.xy);
+        
+        float temperature = 2 - (((latitudeOffset + id.y) / latitudeRange) + (height / maxHeight)) * 0.5;
+        
+        int t = clamp(floor(temperature * 1.0), 0.0, 2.0);
+        int m = clamp(round(moisture * 4), 0, 3);
+        int h = clamp(round(height * 50), 0, 2);
+        int biome = biomesMapping[h + m * hCount + t * hCount * mCount];        
+        biomes[id.x + id.y * biomesLength] = biome;
+    }
+}
+
+#endif

@@ -1,0 +1,16 @@
+#pragma kernel PerlinHeightMapCompute
+
+#include "PerlinHeightMap.cginc"
+
+float4 perlinHeightMapOffset;
+uint mapLength;
+RWStructuredBuffer<float> heightMap;
+
+[numthreads(32,32,1)]
+void PerlinHeightMapCompute (uint3 id : SV_DispatchThreadID)
+{
+    if(id.x < mapLength && id.y < mapLength)
+    {   
+        heightMap[id.y * mapLength + id.x] = PerlinHeightMap(float2(int(id.x) - 2 + perlinHeightMapOffset.x, int(id.y) - 2 + perlinHeightMapOffset.y));
+    }
+}

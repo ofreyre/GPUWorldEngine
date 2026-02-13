@@ -1,0 +1,78 @@
+#pragma kernel Compute
+
+#include "../../../../Common/Shaders/PerlinWorley.cginc"
+
+struct noiseSettings
+{
+    float scale;
+    float cellLength;
+    float period;
+    uint layers;
+    float persistance;
+    float roughness;
+};
+
+float y;
+StructuredBuffer<noiseSettings> settings;
+StructuredBuffer<float> perlinWeights;
+RWStructuredBuffer<float4> result;
+
+
+float GetChannel(float3 p, uint i)
+{
+    int j = i * 2;
+    return step(0, perlinWeights[i]) * PerlinWorley3D(p, perlinWeights[i],
+            settings[j].scale, settings[j].cellLength, settings[j].period, settings[j].layers, settings[j].persistance, settings[j].roughness,
+            settings[j + 1].scale, settings[j + 1].cellLength, settings[j + 1].period, settings[j + 1].layers, settings[j + 1].persistance, settings[j + 1].roughness
+        );
+}
+
+[numthreads(32,1,32)]
+void Compute(uint3 id : SV_DispatchThreadID)
+{
+    float offset = settings[0].period;
+    if (id.x < offset && id.z < offset)
+    {
+        float3 p = float3(id.x, y, id.z) + offset;
+    
+        float r = step(0, perlinWeights[0]) * GetChannel(p, 0);
+        float g = step(0, perlinWeights[1]) * GetChannel(p, 1);
+        float b = step(0, perlinWeights[2]) * GetChannel(p, 2);
+        float a = step(0, perlinWeights[3]) * GetChannel(p, 3);
+        
+        /*
+        float w3 = perlinWeights[3];
+        float a = 0;
+    
+        if(w3 < 0)
+        {
+            a = 1;
+        }
+        else if (perlinWeights[0] < 0)
+        {
+            a = 1;
+            r = GetChannel(p, 3);
+        }
+        else if (perlinWeights[1] < 0)
+        {
+            a = 1;
+            g = GetChannel(p, 3);
+        }
+        else if (perlinWeights[2] < 0)
+        {
+            a = 1;
+            b = GetChannel(p, 3);
+        }
+        else
+        {
+            a = GetChannel(p, 3);
+        }
+        */
+
+        uint i = id.x + id.z * offset;
+        result[i] = float4(r, g, b, a);
+    
+        //noise[id.xyz] = PerlinNoise3Tiledlayered(id.xyz, settings[0].scale, settings[0].cellLength, settings[0].period, settings[0].layers, settings[0].persistance, settings[0].roughness);
+        //noise[id.xyz] = 1 - Cellular3dtiledlayered(id.xyz + offset, settings[1].scale, settings[1].cellLength, settings[1].period, settings[1].layers, settings[1].persistance, settings[1].roughness);
+    }
+}

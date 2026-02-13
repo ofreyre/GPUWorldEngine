@@ -1,0 +1,159 @@
+#pragma kernel MeshTerrainCompute
+
+struct MeshCollisionData{
+    
+    float3 p;
+    float3 n;
+    float d;
+};
+
+StructuredBuffer<float> heightMap;
+RWStructuredBuffer<float3> vertices;
+RWStructuredBuffer<float2> uvs;
+RWStructuredBuffer<int> triangles;
+RWStructuredBuffer<float3> normals;
+RWStructuredBuffer<MeshCollisionData> meshCollisionData;
+float meshScale;
+float heightScale;
+uint meshLength;
+uint trianglesLength;
+uint heightMapLength;
+uint numCollisionVertsPerLine;
+float3 chunkPos;
+
+
+
+
+[numthreads(32,32,1)]
+void MeshTerrainCompute (uint3 id : SV_DispatchThreadID)
+{
+    if(id.x < meshLength && id.y < meshLength)
+    {
+        uint heightmapIndex = (id.y + 1) * heightMapLength + id.x + 1;
+        float3 p = float3(
+            id.x * meshScale,
+            heightMap[heightmapIndex] * heightScale,
+            id.y * meshScale
+        );
+
+        float3 a = p + chunkPos;
+
+        uint vertexIndex = id.y * meshLength + id.x;
+        vertices[vertexIndex] = p;
+
+        if(id.x < (meshLength - 1) && id.y < (meshLength - 1))
+        {
+            uint triangleIndex = id.y * trianglesLength + id.x;
+            triangles[triangleIndex * 6] = vertexIndex;
+            triangles[triangleIndex * 6 + 1] = vertexIndex + meshLength + 1;
+            triangles[triangleIndex * 6 + 2] = vertexIndex + 1;
+
+            triangles[triangleIndex * 6 + 3] = vertexIndex;
+            triangles[triangleIndex * 6 + 4] = vertexIndex + meshLength;
+            triangles[triangleIndex * 6 + 5] = vertexIndex + meshLength + 1;
+        }
+
+
+        //************************** NORMALS
+        float2 idf = float2(id.x, id.y);
+
+        //1 Top Right
+        float3 p1 = float3(
+            (idf.x + 1) * meshScale,
+            heightMap[heightmapIndex + heightMapLength + 1] * heightScale,
+            (idf.y + 1) * meshScale
+        );
+
+        float3 p2 = float3(
+            idf.x * meshScale,
+            heightMap[heightmapIndex + heightMapLength] * heightScale,
+            (idf.y + 1) * meshScale
+        );
+
+        float3 c = p1 + chunkPos;
+        float3 d = p2 + chunkPos;
+    
+        float3 normal = normalize(cross(p2 - p, p1 - p));
+
+        //2 Right
+        p2 = float3(
+            (idf.x + 1) * meshScale,
+            heightMap[heightmapIndex + 1] * heightScale,
+            idf.y * meshScale
+        );
+
+        float3 b = p2 + chunkPos;
+        
+        normal += normalize(cross(p1 - p, p2 - p));
+
+        //3 Bottom Right
+        p1 = float3(
+            (idf.x + 1) * meshScale,
+            heightMap[heightmapIndex - heightMapLength + 1] * heightScale,
+            (idf.y - 1) * meshScale
+        );
+        
+        normal += normalize(cross(p2 - p, p1 - p));
+
+        //4 Bottom
+        p2 = float3(
+            idf.x * meshScale,
+            heightMap[heightmapIndex - heightMapLength] * heightScale,
+            (idf.y - 1) * meshScale
+        );
+        
+        normal += normalize(cross(p1 - p, p2 - p));
+
+        //5 Bottom Left
+        p1 = float3(
+            (idf.x - 1) * meshScale,
+            heightMap[heightmapIndex - heightMapLength - 1] * heightScale,
+            (idf.y - 1) * meshScale
+        );
+        
+        normal += normalize(cross(p2 - p, p1 - p));
+
+        //6 Left
+        p2 = float3(
+            (idf.x - 1) * meshScale,
+            heightMap[heightmapIndex - 1] * heightScale,
+            idf.y * meshScale
+        );
+        
+        normal += normalize(cross(p1 - p, p2 - p));
+
+        //7 Top Left
+        p1 = float3(
+            (idf.x - 1) * meshScale,
+            heightMap[heightmapIndex + heightMapLength - 1] * heightScale,
+            (idf.y + 1) * meshScale
+        );
+        
+        normal += normalize(cross(p2 - p, p1 - p));
+
+        //8 Top
+        p2 = float3(
+            idf.x * meshScale,
+            heightMap[heightmapIndex + heightMapLength] * heightScale,
+            (idf.y + 1) * meshScale
+        );
+        
+        normal += normalize(cross(p1 - p, p2 - p));
+
+        normals[vertexIndex] = normal / 8;
+
+        if(id.x < numCollisionVertsPerLine && id.y < numCollisionVertsPerLine)
+        {
+            MeshCollisionData mcd;
+            mcd.p = b;
+            mcd.n = normalize(cross(a - b, c - b));
+            mcd.d = mcd.n.x * mcd.p.x + mcd.n.y * mcd.p.y + mcd.n.z * mcd.p.z;
+            meshCollisionData[id.x + id.y * 2 * numCollisionVertsPerLine] = mcd;
+
+            mcd.p = d;
+            mcd.n = normalize(cross(c - d, a - d));
+            mcd.d = mcd.n.x * mcd.p.x + mcd.n.y * mcd.p.y + mcd.n.z * mcd.p.z;
+            meshCollisionData[id.x + (id.y * 2 + 1) * numCollisionVertsPerLine] = mcd;
+        }
+    }
+}

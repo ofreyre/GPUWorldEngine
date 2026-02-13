@@ -1,0 +1,62 @@
+#pragma kernel StartArrayCompute
+
+int emptyCell;
+int idsMapStart;
+int idsMapLength;
+uint startArrayLength;
+RWStructuredBuffer<int> startArray; //This defines the id;
+StructuredBuffer<int2> idsMap;
+//RWStructuredBuffer<uint> cellsProcessed;
+
+int GetStart(int i, int idx)
+{
+    int start = i;
+    for(int j = i - 1; j > -1; j--)
+    {
+        if(idsMap[idsMapStart + j].x == idx)
+        {
+            start = j;
+        }
+        else
+        {
+            break;
+        }
+    }
+    return start + idsMapStart;
+}
+
+[numthreads(128,1,1)]
+void StartArrayCompute (uint3 id : SV_DispatchThreadID)
+{
+    if(id.x < startArrayLength)
+    {
+        int minIndex = 0;
+        int maxIndex = idsMapLength - 1;
+        
+        [unroll(17)]
+        while(minIndex <= maxIndex)
+        {
+            int i = (minIndex + maxIndex) / 2;
+
+            uint cellIndex = idsMap[idsMapStart + i].x;
+            if(cellIndex == id.x)
+            {
+                startArray[id.x] = GetStart(i, id.x);
+                return;
+            }
+
+            if(cellIndex < id.x)
+            {
+                minIndex = i + 1;
+            }
+            else
+            {
+                maxIndex = i - 1;
+            }
+        }
+        startArray[id.x] = emptyCell;
+    }
+}
+
+
+

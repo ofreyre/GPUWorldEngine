@@ -1,0 +1,43 @@
+#ifndef dbg_bitonicsort
+  #define dbg_bitonicsort
+
+int changeOrder;
+int separation;
+int sequenceLength;
+int offset;
+int i0;
+int i1;
+
+RWStructuredBuffer<int2> workingArray; //x = cell index, y =  object index
+
+[numthreads(1024,1,1)]
+void BitonicSortCompute (uint3 id : SV_DispatchThreadID)
+{
+    if(id.x < i1)
+    {
+        int i = id.x + i0;
+        int sequence = i / separation;
+        int sequenceStart = sequence * sequenceLength;
+        int compare0 = sequenceStart + (i % separation) - offset;
+        if (compare0 >= 0)
+        {
+            int order = ((i * 2) / changeOrder) % 2;
+            int compare1 = compare0 + separation;
+            if ((order == 0 && workingArray[compare0].x > workingArray[compare1].x) ||
+                (order == 1 && workingArray[compare0].x < workingArray[compare1].x))
+            {
+                int val = workingArray[compare0];
+                workingArray[compare0] = workingArray[compare1];
+                workingArray[compare1] = val;
+            }
+        }
+    }
+}
+
+
+
+#endif
+
+
+
+

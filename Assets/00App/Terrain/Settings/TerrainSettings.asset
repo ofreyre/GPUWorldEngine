@@ -1,0 +1,267 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3098fe063e0b045d2ac66de1f283497a, type: 3}
+  m_Name: TerrainSettings
+  m_EditorClassIdentifier: 
+  m_heightMapSettings:
+    scale: 0.01
+    persistance: 0.417
+    lacunarity: 2
+    seed: 0
+    octaves: 6
+    offset: {x: 0, y: 0}
+    mapSize: 64
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0.02338218
+        inSlope: -0.046393212
+        outSlope: -0.046393212
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0.9461411
+      - serializedVersion: 3
+        time: 0.32623488
+        value: 0.10761288
+        inSlope: 0.6984796
+        outSlope: 0.6984796
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.18111764
+        outWeight: 1
+      - serializedVersion: 3
+        time: 0.6042321
+        value: 0.5256426
+        inSlope: 1.8234271
+        outSlope: 1.8234271
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.41106895
+        outWeight: 0.1365185
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0.033384085
+        outSlope: 0.033384085
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.073437296
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    computeShader: {fileID: 7200000, guid: ed038efecd9094afba9519163f12239a, type: 3}
+    computeKernel: PerlinHeightMapCompute
+  m_climateSettings:
+    scale: 0.01
+    persistance: 0.6
+    lacunarity: 2
+    seed: 0
+    m_latitudeDecreaser: 0.1
+    m_heightDecreaser: 0.1
+  m_biomesSettings:
+    scale: 0.01
+    persistance: 0.6
+    lacunarity: 2
+    seed: 0
+    octaves: 6
+    offset: {x: 0, y: 0}
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0.0018043518
+        value: 0.99853516
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    water:
+      texture: {fileID: 2800000, guid: 834b1b364f32a4f6fa7e83a214a26b38, type: 3}
+      normal: {fileID: 2800000, guid: 4bffdc3018b71450d8307d747d65a98d, type: 3}
+      blend: 0.7
+      order: 0.5
+      trees: []
+    ice:
+      texture: {fileID: 2800000, guid: dccc1cb71608f456bb8689648faeb43d, type: 3}
+      normal: {fileID: 2800000, guid: abe12855eaff24acbadb4e577b7c2f98, type: 3}
+      blend: 0.7
+      order: 1
+      trees: []
+    sand:
+      texture: {fileID: 2800000, guid: 8b245678c40ee420dbcaa9f575bb2798, type: 3}
+      normal: {fileID: 2800000, guid: c07d630593c984a899dfc7895aff6aa7, type: 3}
+      blend: 0.7
+      order: 0.1
+      trees: []
+    soil:
+      texture: {fileID: 2800000, guid: 4d7b62e18f723400d867e465e833b1d6, type: 3}
+      normal: {fileID: 2800000, guid: ec02a9d42c61643ec9b9c20bc308a6d9, type: 3}
+      blend: 0.7
+      order: 0.3
+      trees:
+      - prefab: {fileID: 6589940967707913988, guid: 6ef00972fe03e0a4780b321fa6ea0e29, type: 3}
+        collider:
+          r: 0.3
+          h: 50
+          y: 0
+        probability: 0.1
+    drySoil:
+      texture: {fileID: 2800000, guid: c4de9c3e8beff468780befbe0dacb25d, type: 3}
+      normal: {fileID: 2800000, guid: 3e1343cc638c2492d99ceac399538d8b, type: 3}
+      blend: 0.7
+      order: 0.2
+      trees:
+      - prefab: {fileID: 6589940967707913988, guid: 6ef00972fe03e0a4780b321fa6ea0e29, type: 3}
+        collider:
+          r: 0.3
+          h: 50
+          y: 0
+        probability: 0.1
+    rocks:
+      texture: {fileID: 2800000, guid: c64af559a287248efb71656316ddcceb, type: 3}
+      normal: {fileID: 2800000, guid: b06fa31fa268e49a6a4fbba45656b0c3, type: 3}
+      blend: 0.7
+      order: 0.7
+      trees: []
+    grass:
+      texture: {fileID: 2800000, guid: 0fdc8e45e93504d909b294ac70e511b7, type: 3}
+      normal: {fileID: 2800000, guid: 1c248cd5bc63149b0a5f84ac5a943b1d, type: 3}
+      blend: 0.7
+      order: 0.8
+      trees:
+      - prefab: {fileID: 6589940967707913988, guid: 6ef00972fe03e0a4780b321fa6ea0e29, type: 3}
+        collider:
+          r: 0.3
+          h: 50
+          y: 0
+        probability: 0.1
+    forest:
+      texture: {fileID: 2800000, guid: e603b6d5a5ec84601b59aa39a1ecd93d, type: 3}
+      normal: {fileID: 2800000, guid: ca8be5efce3794126bd5f62c208298ca, type: 3}
+      blend: 0.7
+      order: 0.9
+      trees:
+      - prefab: {fileID: 6589940967707913988, guid: 6ef00972fe03e0a4780b321fa6ea0e29, type: 3}
+        collider:
+          r: 0.3
+          h: 50
+          y: 0
+        probability: 0.1
+    tundra:
+      texture: {fileID: 2800000, guid: 2e331168586424677a3577cb8daea959, type: 3}
+      normal: {fileID: 2800000, guid: f2cdde896672d4d31bc0b2d156693684, type: 3}
+      blend: 0.7
+      order: 0.95
+      trees:
+      - prefab: {fileID: 6589940967707913988, guid: 6ef00972fe03e0a4780b321fa6ea0e29, type: 3}
+        collider:
+          r: 0.3
+          h: 50
+          y: 0
+        probability: 0.1
+    staticObjectNormalTolerance: 0.9
+    computeShader: {fileID: 7200000, guid: 7ed4e51ffb0f042dc8249bc95c25e187, type: 3}
+    computeKernel: BiomesCompute
+    initTreesComputeShader: {fileID: 7200000, guid: 50db05b6a67f8b24295e37e1a5dfeae9, type: 3}
+    initTreesComputeKernel: TreeInitCompute
+  m_meshSettings:
+    meshScale: 1
+    heightScale: 50
+    meshSize: 62
+    meshWorldSize: 64
+    computeShader: {fileID: 7200000, guid: 4f19b089cee4a4567a3292650487f933, type: 3}
+    computeKernel: MeshTerrainCompute
+  m_boidsSettings:
+    bitomicShader: {fileID: 7200000, guid: 4df7c8781aa11492fa7d8607fc5378c1, type: 3}
+    bitomicKernel: BitonicSortCompute
+    startArrayShader: {fileID: 7200000, guid: e4e5e133c9bde42389138801b8c54417, type: 3}
+    startArrayKernel: StartArrayCompute
+    boidsInitShader: {fileID: 7200000, guid: c6aaba22febb04b7fab839717f8f8100, type: 3}
+    boidsInitKernel: BoidsInitCompute
+    boidsShader: {fileID: 7200000, guid: c9bcd509c736b4600aeddc51a380d948, type: 3}
+    boidsKernel: BoidsCompute
+    desireSeparation: 0.1
+    boidsCellWidthInChunkCells: 1
+    boidsPerceptionInBoidsCells: 20
+    bakeFPS: 20
+    bakeSavePath: 
+    minTerrainHeight: 0
+    maxTerrainHeight: 0
+    minBoidSpacing: 3
+    maxBoidSpacing: 4
+    minCos: 0.8
+    boids:
+    - prefab: {fileID: 8797346567050417397, guid: 449547b66cdf8a244b3977bfc6afc919, type: 3}
+      maxSpeed: 4
+      maxForce: 2
+      seekWeight: 0.3
+      r: 0.5
+      minScale: 1.2
+      maxScale: 1.5
+      spawnProb: 0.05
+      stamina: 1.5
+      collider:
+        r: 0.5
+        h: 1.5
+        y: 0.248
+    - prefab: {fileID: 4498297017814855620, guid: d85d0a87fb3618c469dc785df1d34719, type: 3}
+      maxSpeed: 2
+      maxForce: 2
+      seekWeight: 0.3
+      r: 0.5
+      minScale: 1.7
+      maxScale: 2
+      spawnProb: 0.05
+      stamina: 2
+      collider:
+        r: 0.5
+        h: 1.5
+        y: 0.248
+    - prefab: {fileID: 7376381185477943930, guid: 4eea80dd98726bd48ae8ea123e840a9a, type: 3}
+      maxSpeed: 6
+      maxForce: 5
+      seekWeight: 0.3
+      r: 0.5
+      minScale: 1.5
+      maxScale: 2
+      spawnProb: 0.05
+      stamina: 1
+      collider:
+        r: 0.5
+        h: 1.5
+        y: 0.2
+  m_raysSettings:
+    computeShader: {fileID: 7200000, guid: 0adcf876abf58475db26af2a0eb01591, type: 3}
+    computeKernel: RaysCollisionCompute
+  m_lengthInChunks: 100
+  m_visibleRadiusInChunks: 1
+  m_cacheRadiusInChunks: 2
+  m_material: {fileID: 2100000, guid: 3c7589d4e04494c5fb17ecc3c2662b17, type: 2}
+  EMPTY: 99999999

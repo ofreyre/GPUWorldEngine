@@ -1,0 +1,129 @@
+#pragma kernel BoidsInitCompute
+
+#include "../../Common/Shaders/WhiteNoise.cginc"
+#include "MeshCollisionComputations.hlsl"
+
+struct BoidInitSettings
+{
+    float maxSpeed;
+    float maxForce;
+    float seekWeight;
+    float r;
+    float minScale;
+    float maxScale;
+    float spawnProb;
+    float stamina;
+};
+
+struct BoidSettingsResult {
+    float3 pos;
+    float r;
+    float scale;
+    float maxSpeed;
+    float maxForce;
+    float seekWeight; //]0,1[
+    int2 gridCoords;
+    int2 chunkCoords;
+    float stamina;
+};
+
+struct Cyllinder
+{
+    float r;
+    float h;
+    float y;
+};
+
+uint boidsInitSettingsLength;
+uint chunkCellsCount;
+float cellLength;
+float time;
+float2 chunkCoords;
+float exclusionR;
+float2 exclusionC;
+float normalTolerance;
+
+StructuredBuffer<float3> normals;
+StructuredBuffer<BoidInitSettings> boidsInitSettings;
+StructuredBuffer<Cyllinder> boidsInitCollisions;
+StructuredBuffer<int> cellContent;
+RWStructuredBuffer<BoidSettingsResult> boidsSettingsResult;
+RWStructuredBuffer<Cyllinder> boidCollidersResult;
+RWStructuredBuffer<int> hasBoidResult;
+
+
+
+int GetBoidSettingsIndexRnd(uint3 id : SV_DispatchThreadID)
+{
+    float prob = rand2dTo1d(id.x, id.y);
+    float spawnProb = 0;
+    for (uint i=0;i< boidsInitSettingsLength;i++)
+    {
+        BoidInitSettings boidSettings = boidsInitSettings[i];
+        spawnProb += boidSettings.spawnProb;
+        if(prob < spawnProb)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+[numthreads(32,32,1)]
+void BoidsInitCompute (uint3 id : SV_DispatchThreadID)
+{
+    if(id.x < chunkCellsCount && id.y < chunkCellsCount)
+    {
+        int index = id.y * chunkCellsCount + id.x;
+        if (id.x > 0 && id.y > 0 && cellContent[index] < 0 && abs(dot(normals[index], float3(0, 1, 0))) > normalTolerance)
+        {
+            float2 pos = meshCollisionOrigin + id.xy * cellLength;
+            if (length(exclusionC - pos) > exclusionR)
+            {
+                int i = GetBoidSettingsIndexRnd(id);
+                if (i != -1)
+                {
+                    BoidInitSettings initSettings = boidsInitSettings[i];
+                    BoidSettingsResult result;
+                    //result.gridCoords = chunkCoords * chunkCellsCount + id.xy;
+                    result.chunkCoords = chunkCoords;
+                    result.gridCoords = pos / cellLength;
+
+                    pos += cellLength * 0.5;
+                    result.pos = float3(pos.x, GetMeshY(pos), pos.y);
+
+                    float k = rand1dTo1d(time * (id.x + id.y));
+                    float scale = initSettings.minScale * k + initSettings.maxScale * (1 - k);
+                    result.scale = scale;
+                    result.r = initSettings.r * scale;
+                    result.maxSpeed = initSettings.maxSpeed;
+                    result.maxForce = initSettings.maxForce;
+                    result.seekWeight = initSettings.seekWeight;
+                    result.stamina = initSettings.stamina * scale;
+                    boidsSettingsResult[index] = result;
+
+                    Cyllinder colliderSetting = boidsInitCollisions[i];
+                    Cyllinder collider;
+                    collider.r = colliderSetting.r * scale;
+                    collider.h = colliderSetting.h * scale;
+                    collider.y = colliderSetting.y * scale;
+                    boidCollidersResult[index] = collider;
+
+                    hasBoidResult[index] = i + 1;
+                }
+                else
+                {
+                    hasBoidResult[index] = 0;
+                }
+            }
+            else
+            {
+                hasBoidResult[index] = 0;
+            }
+        }
+        else
+        {
+            hasBoidResult[index] = 0;
+        }
+    }
+}

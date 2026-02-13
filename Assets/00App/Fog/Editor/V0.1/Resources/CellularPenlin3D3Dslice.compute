@@ -1,0 +1,20 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Compute
+
+#include "CellularPerlin3D.hlsl"
+
+float y;
+
+[numthreads(32,1,32)]
+void Compute(uint3 id : SV_DispatchThreadID)
+{
+    uint max = uint(period);
+    if (id.x < max && id.z < max)
+    {
+        float2x4 noise = CelularPerlin3D(float3(id.x, y, id.z) + period);
+        
+        uint j = id.x + id.z * period;
+        float4 channelFilter = step(0, weight);
+        result[j] = (noise._11_12_13_14 * weight + (1 - noise._21_22_23_24) * (1 - weight)) * channelFilter;
+    }
+}

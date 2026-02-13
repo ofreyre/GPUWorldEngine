@@ -1,0 +1,240 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel RaysCollisionCompute
+
+struct Boid {
+    float3 pos;
+    float r;
+    float2 v;
+    float maxSpeed;
+    float maxForce;
+    float seekWeight;
+};
+
+struct Cyllinder
+{
+    float r;
+    float h;
+    float y;
+};
+
+struct CyllinderCollider
+{
+    float2 pos;
+    float r;
+};
+
+struct Ray {
+    float3 p0;
+    float3 p1;
+    float damage;
+};
+
+struct RayCollision {
+    float3 p;
+    float3 n;
+    uint boidI;
+};
+
+uint emptyCell;
+uint gridWidth;
+float gridCellWidth;
+float2 gridMin;
+int2 gridMax;
+uint gridBoidsMapLength;
+uint raysLength;
+uint boidsLength;
+
+
+StructuredBuffer<int2> gridBoidsMap;
+StructuredBuffer<uint> gridStart;
+StructuredBuffer<Boid> boids;
+StructuredBuffer<Cyllinder> boidColliders;
+StructuredBuffer<Ray> rays; //This defines the id
+StructuredBuffer<int> treesGrid;
+StructuredBuffer<CyllinderCollider> treesColliders;
+RWStructuredBuffer<RayCollision> raysResult;
+RWStructuredBuffer<RayCollision> raysTreeResult;
+//RWStructuredBuffer<int2> rayCells;
+
+//int rayCellsI;
+
+float4 GetRayCircleIntersection(Ray ray, float r, float2 d, float2 p)
+{
+    float2 p0 = ray.p0.xz - p.xy;
+    float2 p1 = ray.p1.xz - p.xy;
+    float dr2 = d.x * d.x + d.y * d.y;
+    float D = p0.x * p1.y - p1.x * p0.y;
+    float D2 = D * D;
+    float r2 = r * r;
+    float disc = r2 * dr2 - D2;    
+
+    if (disc > 0)
+    {
+                        //collisionData.boidI = -1;
+
+        float2 a = float2(D * d.y, -D * d.x);
+        float b = sqrt(r2 * dr2 - D2);
+        float2 c = float2(sign(d.y) * d.x * b, abs(d.y) * b);
+
+        float2 pp0 = float2((a.x + c.x) / dr2, (a.y + c.y) / dr2) + p.xy;
+        float2 pp1 = float2((a.x - c.x) / dr2, (a.y - c.y) / dr2) + p.xy;
+        return float4(pp0, pp1);
+    }
+    else
+    {
+        return emptyCell;
+    }
+}
+
+bool SetRayCollision(Ray ray, int2 cellP, float2 d, float mXY, uint rayResultIndex)
+{
+    RayCollision collisionData = (RayCollision)0;
+    collisionData.p = emptyCell;
+    collisionData.boidI = emptyCell;
+    
+    RayCollision treeCollisionData = (RayCollision) 0;
+    collisionData.p = emptyCell;
+    collisionData.boidI = emptyCell;
+    //[unroll(3)]
+    for (uint px = max(0, cellP.x - 1); px < min(cellP.x + 2, gridWidth); px++)
+    {
+        //[unroll(3)]
+        for (uint py = max(0, cellP.y - 1); py < min(cellP.y + 2, gridWidth); py++)
+        {
+            //rayCells[rayCellsI] = int2(px, py) + gridMin;
+            //rayCellsI++;
+
+            uint gridIndex = px + py * gridWidth;
+            uint gridStartI = gridStart[gridIndex];
+            uint treeI = treesGrid[gridIndex];
+            
+            
+            float treeD = emptyCell;
+            if (treeI != emptyCell)
+            {
+                CyllinderCollider collider = treesColliders[treeI];
+                float4 intersections = GetRayCircleIntersection(ray, collider.r, d, collider.pos);
+                if (intersections.x != float(emptyCell))
+                {
+                    float2 pp0 = intersections.xy;
+                    float2 pp1 = intersections.zw;
+                    float d0 = distance(ray.p0.xz, pp0);
+                    float d1 = distance(ray.p0.xz, pp1);
+                    if (d0 < d1)
+                    {
+                        treeD = d0;
+                        float pY = ray.p0.y + (pp0.x - ray.p0.x) * mXY;
+                        treeCollisionData.boidI = treeI + boidsLength;
+                        treeCollisionData.p = float3(pp0.x, pY, pp0.y);
+                        treeCollisionData.n = float3(treeCollisionData.p.x - collider.pos.x, 0, pp0.y - collider.pos.y);
+                    }
+                    else
+                    {
+                        treeD = d1;
+                        float pY = ray.p0.y + (pp1.x - ray.p0.x) * mXY;
+                        treeCollisionData.boidI = treeI + boidsLength;
+                        treeCollisionData.p = float3(pp1.x, pY, pp1.y);
+                        treeCollisionData.n = float3(treeCollisionData.p.x - collider.pos.x, 0, pp1.y - collider.pos.y);
+                    }
+                }
+            }
+
+            if (gridStartI != emptyCell)
+            {
+                for (uint i = gridStartI; i < gridBoidsMapLength; i++)
+                {
+                    uint2 map = gridBoidsMap[i];
+
+                    if (map.x != gridIndex || map.y == 0)
+                    {
+                        break;
+                    }
+
+                    Boid boid = boids[map.y];
+                    Cyllinder collider = boidColliders[map.y];
+                    float4 intersections = GetRayCircleIntersection(ray, collider.r, d, boid.pos.xz);
+                    if (intersections.x != float(emptyCell))
+                    {
+                        float2 pp0 = intersections.xy;
+                        float2 pp1 = intersections.zw;
+                        float3 p = float3(emptyCell, emptyCell, emptyCell);
+                        
+                        float y0 = boid.pos.y + collider.y;
+                        float y1 = y0 + collider.h;
+                        float p0Y = ray.p0.y + (pp0.x - ray.p0.x) * mXY;
+                        float p1Y = ray.p0.y + (pp1.x - ray.p0.x) * mXY;
+                        
+                        //collisionData.p = float3(y0, p0Y, y1);
+                        //collisionData.n = float3(collider.y, collider.h, 0);
+
+                        float boidD = emptyCell;
+                        float d0 = distance(ray.p0.xz, pp0);
+                        float d1 = distance(ray.p0.xz, pp1);
+                        if (y0 < p0Y && p0Y < y1 && d0 < d1)
+                        {
+                            boidD = d0;
+                            //collisionData.boidI = -2;
+                            p = float3(pp0.x, p0Y, pp0.y);
+                        }
+                        else if (y0 < p1Y && p1Y < y1)
+                        {
+                            boidD = d1;
+                            //collisionData.boidI = -3;
+                            p = float3(pp1.x, p1Y, pp1.y);
+                        }
+                        
+                        if (boidD < treeD)
+                        {
+                            if (distance(ray.p0, p) < distance(ray.p0, collisionData.p))
+                            {
+                                collisionData.boidI = map.y;
+                                collisionData.p = p;
+                                collisionData.n = float3(p.x - boid.pos.x, 0, p.z - boid.pos.z);
+                                
+                                raysResult[rayResultIndex] = collisionData;
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (treeI != emptyCell)
+            {           
+                raysResult[rayResultIndex] = treeCollisionData;
+                return true;
+            }
+        }
+    }
+    collisionData.boidI = emptyCell;
+    raysResult[rayResultIndex] = collisionData;
+    return false;
+}
+
+[numthreads(8,1,1)]
+void RaysCollisionCompute (uint3 id : SV_DispatchThreadID)
+{
+    if(id.x < raysLength)
+    {
+        //rayCellsI = 0;
+        Ray ray = rays[id.x];
+        int2 p0 = ray.p0.xz / gridCellWidth - gridMin;
+        float2 direction = ray.p1.xz - ray.p0.xz;
+        float maxXY = max(abs(direction.x), abs(direction.y));
+        uint rayLength = maxXY / gridCellWidth / 2 + 1;
+        float2 d = float2(direction.x / maxXY, direction.y / maxXY);
+        float2 p = p0;
+        float mXY = (ray.p1.y - ray.p0.y) / direction.x;
+        
+        
+        for (uint i = 0; i < rayLength; i++)
+        {
+            bool collisionData = SetRayCollision(ray, p, direction, mXY, id.x);
+            if(collisionData)
+            {
+                break;
+            }
+            p += d * 2;
+        }
+    }
+}

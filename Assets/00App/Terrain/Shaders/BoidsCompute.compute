@@ -1,0 +1,213 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel BoidsCompute
+#include "MeshCollisionComputations.hlsl"
+
+struct Boid {
+    float3 pos;
+    float r;
+    float2 v;
+    float maxSpeed;
+    float maxForce;
+    float seekWeight; //]0,1[
+};
+
+struct BoidResult{
+    float3 pos;
+    float2 v;
+    int2 gridPos;
+    int2 chunkPos;
+};
+
+struct CyllinderColliderData
+{
+    float2 pos;
+    float r;
+};
+
+uint emptyCell;
+float2 targetPosition;
+float targetR;
+uint gridWidth;
+float gridCellWidth;
+uint gridBoidsMapStart;
+uint gridBoidsMapLength;
+uint gridStartLength;
+float desireSeparation;
+float deltaTime;
+
+//int meshCollisionChunkHeight; //in cells
+//int meshCollisionChunkLength;
+//int meshCollisionSuperchunkWidthInCells;
+//int meshCollisionWidthInChunks;
+float chunkWorldSize;
+float meshScale;
+
+
+StructuredBuffer<int2> gridBoidsMap;
+StructuredBuffer<uint> gridStart; //This defines the id;
+StructuredBuffer<Boid> boidsBases;
+StructuredBuffer<int> treesGrid;
+StructuredBuffer<CyllinderColliderData> treesColliders;
+RWStructuredBuffer<BoidResult> boidResults;
+
+float2 GetTreeSeparation(uint gridI, Boid boidData)
+{
+    float2 desire = float2(0, 0);
+    uint2 gridCoord = uint2(gridI % gridWidth, gridI / gridWidth);
+    int count = 0;
+    for (uint y = clamp(gridCoord.y - 1, 0, gridWidth); y < clamp(gridCoord.y + 2, 0, gridWidth); y++)
+    {
+        for (uint x = clamp(gridCoord.x - 1, 0, gridWidth); x < clamp(gridCoord.x + 2, 0, gridWidth); x++)
+        {
+            uint gridIndex = x + y * gridWidth;
+            uint treeID = treesGrid[gridIndex];
+            if (treeID != emptyCell)
+            {
+                CyllinderColliderData collider = treesColliders[treeID];
+                float2 direction = boidData.pos.xz - collider.pos.xy;
+                float d = length(direction);
+                if ((d > 0) && (d < boidData.r + collider.r + desireSeparation))
+                {
+                    desire += direction / d;
+                    count++;
+                }
+            }
+        }
+    }
+
+    if (count > 0)
+    {
+        desire = normalize(desire) * boidData.maxSpeed;
+        float2 steer = desire - boidData.v;
+        float len = length(steer);
+        if (len > boidData.maxForce)
+        {
+            steer = steer * boidData.maxForce / len;
+        }
+        return steer;
+    }
+    else
+    {
+        return desire;
+    }
+
+}
+
+float2 GetSeparation(uint gridI, uint boidI, Boid boidData)
+{
+    float2 desire = float2(0, 0);
+    uint2 gridCoord = uint2(gridI % gridWidth, gridI / gridWidth);
+    int count = 0; //0;
+    for(uint y = clamp(gridCoord.y - 1, 0, gridWidth);y<clamp(gridCoord.y + 2, 0, gridWidth);y++)
+    {
+        for(uint x = clamp(gridCoord.x - 1, 0, gridWidth); x<clamp(gridCoord.x + 2, 0, gridWidth); x++)
+        {
+            uint gridIndex = x + y * gridWidth;
+            uint gridStartI = gridStart[gridIndex];
+            if(gridStartI != emptyCell)
+            {
+                for(uint i=gridStartI; i < gridBoidsMapLength;i++)
+                {
+                    //uint2 map = gridBoidsMap[i + gridBoidsMapStart];
+                    uint2 map = gridBoidsMap[i];
+                    if(map.x != gridIndex)
+                    {
+                        break;
+                    }
+                    if(boidI != map.y)
+                    {
+                        Boid boid = boidsBases[map.y];
+                        float2 direction = boidData.pos.xz - boid.pos.xz;
+                        float d = length(direction);
+                        if ((d > 0) && (d < boidData.r + boid.r + desireSeparation))
+                        {
+                          desire += direction / d;
+                          count++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if(count > 0)
+    {
+        desire = normalize(desire) * boidData.maxSpeed;
+        float2 steer = desire - boidData.v;
+        float len = length(steer);
+        if(len > boidData.maxForce)
+        {
+            steer = steer * boidData.maxForce / len;
+        }
+        return steer;
+    }
+    else
+    {
+        return desire;
+    }
+}
+
+float2 GetSeek(Boid boidData)
+{
+    float2 direction = targetPosition - boidData.pos.xz;
+    float d = length(direction);
+    if (d > boidData.r + targetR + desireSeparation)
+    {
+        float2 steer = direction * boidData.maxSpeed / d;
+        steer -= boidData.v;
+        float d = length(steer);
+        if(d > boidData.maxForce)
+        {
+            steer = steer * boidData.maxForce / d;
+        }
+        return steer;
+    }
+
+    return -boidData.v;
+}
+
+[numthreads(128,1,1)]
+void BoidsCompute (uint3 id : SV_DispatchThreadID)
+{
+    //if(id.x < gridBoidsMapLength)
+    if(id.x < gridStartLength)
+    {
+        uint gridStartI = gridStart[id.x];
+        if(gridStartI != emptyCell)
+        {
+            [unroll(20)]
+            for(uint i = gridStartI; i < gridBoidsMapLength; i++)
+            {
+                uint2 map = gridBoidsMap[i];
+                if(map.x != id.x)
+                {
+                    break;
+                }
+                Boid boidData = boidsBases[map.y];
+                BoidResult boidResult = (BoidResult)0; //= boidResults[map.y];
+                float2 seek = GetSeek(boidData);
+                float2 separation = GetSeparation(id.x, map.y, boidData);
+                float2 treeSeparation = GetTreeSeparation(id.x, boidData);
+                float k = (1 - boidData.seekWeight);
+                float2 a = seek * boidData.seekWeight + separation * k + treeSeparation * 2 * k + GetTangentXZ(boidData.pos.xz) * k;
+                //a = float2(0,0);
+
+                float2 v = boidData.v + a;
+                //float2 v = seek;
+                if(length(v) > 0)
+                {
+                    boidResult.v = normalize(v) * boidData.maxSpeed;
+                }
+                
+                
+                float2 pos2D = boidData.pos.xz + boidResult.v * deltaTime;
+                boidResult.pos = float3(pos2D.x, GetMeshY(pos2D), pos2D.y);
+                float2 p2d = pos2D / gridCellWidth;
+                boidResult.gridPos = p2d;
+                boidResult.chunkPos = int2(pos2D / chunkWorldSize);
+                
+                boidResults[map.y] = boidResult;
+            }
+        }
+    }
+}
