@@ -1,4 +1,4 @@
-## Procedural world with compute shaders
+## GPU World Engine
 
 Unity 2021.3.4f1
 
@@ -6,7 +6,7 @@ Platforms Windows and Mac
 
 Render Pipeline: URP
 
-Experiment Path: Assets/00App/Terrain
+Demo Path: Assets/00App/Terrain/Scenes/Terrain.unity
 
 Procedural world 1 - infinite terrain, biomes, boids, mesh colliders, raycasting
 
