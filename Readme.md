@@ -91,11 +91,11 @@ The compute shader:
 
 The Noise Editor
 
-![Main State Machine](https://drive.google.com/uc?export=view&id=1tjImnitzPd1TOrxMNsv_haLoVHegYUUb "Editor")
+![Noise Editor](https://drive.google.com/uc?export=view&id=1tjImnitzPd1TOrxMNsv_haLoVHegYUUb "Noise Editor")
 
 The Baked Noise in a Texture3D
 
-![Main State Machine](https://drive.google.com/uc?export=view&id=1KCFn4CLIIUsoC_awFQhPf6KU7oMx5wuy "Editor")
+![Noise Texture3D](https://drive.google.com/uc?export=view&id=1KCFn4CLIIUsoC_awFQhPf6KU7oMx5wuy "Noise Texture3D")
 
 #### The fog shader
 
